@@ -16,7 +16,7 @@ import htmlmin
 
 
 
-SCALE = 10; 
+SCALE = 12; 
 offset_x = 0; 
 offset_y = 0;
 
@@ -75,7 +75,7 @@ def get_img (folder, layer, outline):
         copper = load_layer(glob.glob (f"{gerber_path}/*.GTL")[0])
         mask = load_layer(glob.glob (f"{gerber_path}/*.GTS")[0])
         silk = load_layer(glob.glob (f"{gerber_path}/*.GTO")[0])
-        outline = load_layer(glob.glob (f"{gerber_path}/*.GM2")[0])
+        outline = load_layer(glob.glob (f"{gerber_path}/*.GM{outline}")[0])
         #drillr = load_layer(os.path.join(nc, 'nc-RoundHoles.TXT'))
         #drills = load_layer(os.path.join(nc, 'nc-SlotHoles.TXT'))
         mirror = False
@@ -146,14 +146,19 @@ def translate (x, y, w, h, rotation, mirror=False):
     return {"x": round(out_x),"y": round(out_y),"w": round(w),"h": round(h)}
 
 def get_footprint (footprint):
+
     if "0402" in footprint:
-        return (8,16)
+        l=1.0
+        w=0.5
     elif "0603" in footprint:
-        return (12,24)
+        l=1.6
+        w=0.8
     elif "0805" in footprint:
-        return (32, 64)
+        l=2.0
+        w=1.2
     elif "1210" in footprint:
-        return (50, 64)
+        l=3.2
+        w=2.5
     elif "QFN" in footprint:
         return (80, 80)
     elif "X2SON" in footprint:
@@ -163,6 +168,9 @@ def get_footprint (footprint):
     else:
         print(f"No Dimensions for {footprint}")
         return (10, 10)
+
+
+    return (w*SCALE, l*SCALE)    
 
 if __name__ == "__main__":
     
@@ -188,7 +196,8 @@ if __name__ == "__main__":
 
     # Get BoM and Group with Pandas
     df = pd.read_csv(glob.glob (f"{args.pcb}/pnp/*.csv")[0])
-    components = df.groupby(['Comment', "Footprint"])
+    components = df.groupby(["Footprint",'Value'])
+
 
     # Interate through the components
     for key, item in components:
@@ -202,6 +211,11 @@ if __name__ == "__main__":
         y_list = group["Center-Y(mm)"].tolist() 
         r_list = group["Rotation"].tolist() 
         f_list = group["Footprint"].tolist() 
+        l_list = group["Layer"].tolist() 
+
+        # skip anything that isnt the layer
+        if args.layer.lower() not in l_list[0].lower():
+            continue;
 
         rectangles = ""
 
@@ -216,19 +230,15 @@ if __name__ == "__main__":
             tmp = replace_snippet (tmp,"Y", f"{coordinates['y']}")
             tmp = replace_snippet (tmp,"W", f"{coordinates['w']}")
             tmp = replace_snippet (tmp,"H", f"{coordinates['h']}")
-
             rectangles+=tmp
 
         # Create component table entry
         tmp = get_snippet ("TABLE")
         tmp = replace_snippet (tmp,"NAME", name)
-        
-
-
         tmp = replace_snippet (tmp,"QTY", f"{len(x_list)}")
-        tmp = replace_snippet (tmp,"PART", f"{key[0]}")
-        tmp = replace_snippet (tmp,"PART_LINK", f"http://www.google.com/search?q={key[0]}")
-        tmp = replace_snippet (tmp,"FOOTPRINT", f"{key[1]}")
+        tmp = replace_snippet (tmp,"PART", f"{key[1]}")
+        tmp = replace_snippet (tmp,"PART_LINK", f"http://www.google.com/search?q={key[1]}")
+        tmp = replace_snippet (tmp,"FOOTPRINT", f"{key[0]}")
 
         component_table += tmp; 
 
