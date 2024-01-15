@@ -180,6 +180,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--outline", default="6", metavar="", type=str, help="specity the layer to show")
     args = parser.parse_args()
 
+
+    mirror = False  
     if args.layer.lower() == "bottom":
         mirror = True
 
@@ -190,9 +192,7 @@ if __name__ == "__main__":
 
     index = 0
     functions = ""
-    mirror = False  
     component_table = ""
-
 
     # Get BoM and Group with Pandas
     df = pd.read_csv(glob.glob (f"{args.pcb}/pnp/*.csv")[0])

@@ -87,15 +87,15 @@ ctx.rect(__X__, __Y__,__W__,__H__);
         </div>
     </div>
     <script>
-    window.onload = function() 
-    {
+
       var c = document.getElementById("myCanvas");
       var ctx = c.getContext("2d");
       var img = new Image();
       img.src = image_data
-      ctx.drawImage(img, 0, 0);
-      ctx.drawImage(img, 0, 0);
-    }
+      img.onload = function ()
+      {
+        ctx.drawImage(img, 0, 0);
+      }
     __ONCLICK_FUNCTIONS__
 </script>
 </body>
